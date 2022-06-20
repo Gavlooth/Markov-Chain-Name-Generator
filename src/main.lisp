@@ -26,11 +26,21 @@
 (defun get-sylables (word)
   (iter (for idx index-of-string word)
     (with max = (length word))
-    (unless (=< max ( + 2 idx))
+    (unless (<= max ( + 2 idx))
       (print idx)
       (collect (map 'string (lambda (x) (char word (+ x  idx))) '( 0 1 2))))))
 
-(get-sylables "afkslfdflkdafdkafkjafkj")
+
+
+
+(defun occurrences (lst)
+  (let ((table (make-hash-table)))                   ; [1]
+    (iter (for sylable in lst)
+     (incf (gethash sylable table 0)))
+    table))
+
+
+
 
 (iter (for  word in data)
    (iter (for idx index-of-string word)
@@ -66,6 +76,13 @@
 
   (iter (for sylable in uniq-sylables)
    (format stream  "~a ~a" sylable #\Newline))))
+
+
+
+(second sylables)
+(iter (for (k v) in-hashtable (occurrences sylables))
+  (unless (= 1 v)
+   (format t "key: ~a, val:~a ~a" k v #\Newline)))
 
 ;(open "/some/file/name.txt" :direction :output :if-exists :supersede)
 ;(asdf:load-system "markov-chain-namegen")
