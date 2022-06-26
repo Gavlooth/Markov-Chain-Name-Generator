@@ -1,7 +1,8 @@
 (defpackage markov-chain-namegen
   (:import-from :metatilities :spy)
+  ; (:import-from :cl-ppcre :split)
   (:use :cl :iterate))
-; (ql:quickload 'cl-ppcre)
+; (ql:quickload ')
 
 ; (ql:quickload 'metatilities)
 
@@ -13,7 +14,6 @@
 
 (defparameter data (remove-if-not (lambda (x) (< 2 (length x)))  (remove-duplicates (uiop:read-file-lines "/mnt/Data/code/common-lisp/markov-chain-namegen/src/resources/names.txt"))))
 
-(defvar  sylables '())
 
 
 (defclass sylable ()
@@ -42,27 +42,12 @@
 
 
 (defun occurrences-in-word (sylable word)
-  (let ((splitted-text  (uiop:split-string word :separator sylable)))
-   (print splitted-text)
-   (length
-    (iter (for  s in splitted-text)
-      (if (string= sylable  s)
-        (collect s))))))
+ (cl-ppcre:count-matches sylable word))
 
 
-'(defun get-probability (sylable text)
-  (iter (for  word in text)
-        (with (first-sylable (letter &letters)  & sylables ) = (uiop:split-string word :separator sylable))
-    (unless (string= word (car sylable))
-      (print first-sylable)
-      (print letter))))
 
 
-; (cl-ppcre:split "as" "fdasfsdf")
-
-; (length "fdasfsdf")
-
-(defun get-occurances (sylable text)
+(defun get-letter-occurances (sylable text)
  (iter (for  word in text)
    (let ((letters (iter (for c in (cl-ppcre:split sylable word))
                      (unless ( = 0 (length c))
@@ -74,40 +59,20 @@
          (collect letter)))))))
 
 
-
-(iter (for  word in data)
-   (iter (for idx index-of-string word)
-         (with max = (length word))
-     (when (= max ( + 2 idx))
-         (terminate))
-     (setq sylables (cons (map 'string (lambda (x) (char word (+ x  idx))) '( 0 1 2)) sylables))))
-
-(setq sylables (remove-duplicates sylables))
-
-
-
 (defun remove-empty-strings (s-list)
  (iter (for s in  s-list)
      (unless (string= s "")
-       (collect s))))
+       (collect s)
+       (collect (map 'string (lambda (x) (char word (+ x  idx))) (alexandria:iota sylable-length))))))
 
 
 
+(defun save-occurancies-matrix (text)
+ (let ((sylables (remove-duplicates (mapcan  (lambda (word) (get-sylables  3 word))  text))))
+   (with-open-file (stream "markov-matrix.txt" :direction :output :if-does-not-exist :create :if-exists :rename)
+     (iter (for sylable in sylables)
+      (format stream  "~a ~a" sylable #\Newline)))))
 
-(with-open-file (stream "markov-matrix.txt" :direction :output :if-does-not-exist :create)
- (let (uniq-sylables (remove-duplicates sylables))
-
-  (iter (for sylable in uniq-sylables)
-   (format stream  "~a " sylable))
-
-  (iter (for sylable in uniq-sylables)
-   (format stream  "~a ~a" sylable #\Newline))))
+(save-occurancies-matrix data)
 
 
-(second sylables)
-(iter (for (k v) in-hashtable (occurrences sylables))
-  (unless (= 1 v)
-   (format t "key: ~a, val:~a ~a" k v #\Newline)))
-
-;(open "/some/file/name.txt" :direction :output :if-exists :supersede)
-;(asdf:load-system "markov-chain-namegen")
